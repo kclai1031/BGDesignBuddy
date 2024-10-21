@@ -1,0 +1,157 @@
+Alliances
+Area Majority / Influence
+Auction/Bidding
+Dice Rolling
+Hand Management
+Simultaneous Action Selection
+Trick-taking
+Hexagon Grid
+Once-Per-Game Abilities
+Set Collection
+Tile Placement
+Action Points
+Investment
+Market
+Square Grid
+Stock Holding
+Victory Points as a Resource
+Enclosure
+Pattern Building
+Pattern Recognition
+Modular Board
+Network and Route Building
+Point to Point Movement
+Melding and Splaying
+Negotiation
+Trading
+Push Your Luck
+Income
+Race
+Random Production
+Variable Set-up
+Roll / Spin and Move
+Variable Player Powers
+Action Queue
+Bias
+Grid Movement
+Lose a Turn
+Programmed Movement
+Scenario / Mission / Campaign Game
+Voting
+Events
+Paper-and-Pencil
+Player Elimination
+Role Playing
+Movement Points
+Simulation
+Variable Phase Order
+Area Movement
+Commodity Speculation
+Cooperative Game
+Deduction
+Sudden Death Ending
+Connections
+Highest-Lowest Scoring
+Betting and Bluffing
+Memory
+Score-and-Reset Game
+Layering
+Map Addition
+Secret Unit Deployment
+Increase Value of Unchosen Resources
+Ratio / Combat Results Table
+Take That
+Team-Based Game
+Campaign / Battle Card Driven
+Tech Trees / Tech Tracks
+Player Judge
+Chit-Pull System
+Three Dimensional Movement
+Action Drafting
+Minimap Resolution
+Stat Check Resolution
+Action Timer
+Pick-up and Deliver
+Map Deformation
+Bingo
+Crayon Rail System
+Multiple Maps
+Hidden Roles
+Line Drawing
+Tug of War
+Pattern Movement
+Static Capture
+Different Dice Movement
+Chaining
+Ladder Climbing
+Predictive Bid
+Solo / Solitaire Game
+Line of Sight
+Critical Hits and Failures
+Interrupts
+Zone of Control
+Bribery
+End Game Bonuses
+Area-Impulse
+Worker Placement
+Measurement Movement
+Map Reduction
+Real-Time
+Resource to Move
+Mancala
+Ownership
+Kill Steal
+Hidden Movement
+Track Movement
+Deck Construction
+Drafting
+TableauBuilding
+Prisoner's Dilemma
+Hidden Victory Points
+Movement Template
+Slide/Push
+Targeted Clues
+Command Cards
+Grid Coverage
+Relative Movement
+Action/Event
+Card Play Conflict Resolution
+I Cut, You Choose
+Die Icon Resolution
+Elapsed Real Time Ending
+Advantage Token
+Storytelling
+Catch the Leader
+Roles with Asymmetric Information
+Traitor Game
+Moving Multiple Units
+Semi-Cooperative Game
+Communication Limits
+Time Track
+Speed Matching
+Cube Tower
+Re-rolling and Locking
+Impulse Movement
+Loans
+Delayed Purchase
+Deck, Bag, and Pool Building
+Move Through Deck
+Single Loser Game
+Matching
+Induction
+Physical Removal
+Narrative Choice / Paragraph
+Pieces as Map
+Follow
+Finale Ending
+Order Counters
+Contracts
+Passed Action Token
+King of the Hill
+Action Retrieval
+Force Commitment
+Rondel
+Automatic Resource Growth
+Legacy Game
+Dexterity
+Physical
