@@ -77,6 +77,3 @@ jobs:
           app-name: 'DesignBuddyApp'
           slot-name: 'Production'
           package: ${{ env.AZURE_WEBAPP_PACKAGE_PATH }}
-          scm-do-build-during-deployment: true
-          enable-oryx-build: true
-
