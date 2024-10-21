@@ -3,3 +3,4 @@ gunicorn==23.0.0
 openai==1.52.0
 azure-cosmos==4.7.0
 flask-cors==5.0.0
+werkzeug==3.0.4
