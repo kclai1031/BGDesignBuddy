@@ -57,6 +57,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: python-app
+          path: .
 
       - name: Unzip artifact for deployment
         run: unzip release.zip
@@ -75,4 +76,9 @@ jobs:
         with:
           app-name: 'BGDesignBuddyApp'
           slot-name: 'Production'
+
+      - name: Extract compressed output in wwwroot
+        run: |
+          cd /home/site/wwwroot
+          tar -xzf output.tar.gz  # Or `unzip` if it's a zip file
           
