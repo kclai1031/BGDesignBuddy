@@ -1,3 +1,24 @@
+from openai import AzureOpenAI
+from flask import Flask, request, jsonify, render_template
+import logging
+import hashlib
+import os
+import random
+
+
+# Configure logging
+logging.basicConfig(filename='app.log', level=logging.INFO)
+
+client = AzureOpenAI(azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+api_version="2023-05-15",
+api_key=os.getenv("AZURE_OPENAI_API_KEY"))
+
+app = Flask(__name__)
+
+
+@app.route('/')
+def index():
+    return render_template('index.html')
 
 # Initialize OpenAI with Azure credentials
 @app.route('/generate_idea', methods=['POST'])
@@ -138,4 +159,4 @@ def main():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
+    app.run(debug=True)
