@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Board Game Idea Generator</title>
@@ -167,10 +170,13 @@
             })
             .then(data => {
                 if (data.board_game_idea) {
-                    // Display the response at the bottom of the page
+                    // Convert the board game idea Markdown to HTML
+                    const formattedIdea = marked.parse(data.board_game_idea);
+
+                    // Display the formatted HTML in the response container
                     document.getElementById('response_container').innerHTML = `
                         <h2>Generated Board Game Idea</h2>
-                        <pre>${data.board_game_idea}</pre>
+                        <div class="idea-box">${formattedIdea}</div>
                     `;
                 } else {
                     document.getElementById('response_container').innerHTML = `
@@ -190,6 +196,7 @@
 <body>
     <h1>Board Game Idea Generator</h1>
     
+    <br><br>
     <!-- Stage 1: Select number of themes and mechanisms -->
     <div>
         <h2>Step 1: Select Number of Themes and Mechanisms</h2>
@@ -208,6 +215,7 @@
 
         <button type="button" onclick="proceedToSelection()">Proceed</button>
     </div>
+    <br><br>
 
     <!-- Stage 2: Display and select remaining themes and mechanisms -->
     <div id="stage_2">
@@ -250,6 +258,7 @@
         </form>
     </div>
 
+    <br><br>
     <!-- This div will display the response -->
     <div id="response_container" style="margin-top: 20px;">
         <!-- The board game idea will be shown here after form submission -->
