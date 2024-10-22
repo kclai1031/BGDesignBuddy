@@ -16,9 +16,9 @@ api_key=os.getenv("AZURE_OPENAI_API_KEY"))
 app = Flask(__name__)
 
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+# @app.route('/')
+# def index():
+#     return render_template('index.html')
 
 # Initialize OpenAI with Azure credentials
 @app.route('/generate_idea', methods=['POST'])
@@ -39,20 +39,18 @@ def generate_idea():
         prompt = create_prompt(themes, mechanisms, player_count_min=player_count_min, player_count_max=player_count_max, game_length=game_length, game_type=game_type, theme_num=theme_num, mechanism_num=mechanism_num)
 
         # Generate the board game idea
-        # game_idea = prompt_to_response(prompt)
-        # game_idea = generate_idea_with_cache(prompt)
         try:
             game_idea = generate_idea_with_cache(prompt)
         except openai.error.OpenAIError as e:
-            return jsonify({'error': 'Failed to generate idea from OpenAI: ' + str(e)}), 500
+            return jsonify({'error': 'Failed to generate idea from OpenAI: ' + str(e)}), 5000
         logging.info(f"Generated idea: {game_idea}")
         # Return the generated idea in JSON format
-        return jsonify({'board_game_idea': game_idea}), 500
+        return jsonify({'board_game_idea': game_idea}), 5000
 
     except Exception as e:
         # Return an error response in case of an exception
         logging.error(f"Error occurred: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': str(e)}), 5000
 
 
 
