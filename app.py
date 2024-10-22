@@ -16,9 +16,9 @@ api_key=os.getenv("AZURE_OPENAI_API_KEY"))
 app = Flask(__name__)
 
 
-# @app.route('/')
-# def index():
-#     return render_template('index.html')
+@app.route('/')
+def index():
+    return render_template('index.html')
 
 # Initialize OpenAI with Azure credentials
 @app.route('/generate_idea', methods=['POST'])
