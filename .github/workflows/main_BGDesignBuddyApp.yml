@@ -69,3 +69,4 @@ jobs:
           app-name: 'BGDesignBuddyApp'
           slot-name: 'Production'
           package: '.'
+          deployment-method: 'zip-deploy'
