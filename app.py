@@ -18,41 +18,77 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    # Load theme and mechanism lists from the files
+    with open('theme_list.txt', 'r') as file:
+        themes = [line.strip() for line in file.readlines()]
+    
+    with open('mechanism_list.txt', 'r') as file:
+        mechanisms = [line.strip() for line in file.readlines()]
+
+    # Render the index.html template and pass the theme and mechanism lists to it
+    return render_template('index.html', themes=themes, mechanisms=mechanisms)
+
 
 # Initialize OpenAI with Azure credentials
 @app.route('/generate_idea', methods=['POST'])
 def generate_idea():    
     try:
-        # Extract data from the POST request
-        data = request.json
-        themes = data.get('themes', [])
-        mechanisms = data.get('mechanisms', [])
-        player_count_min = data.get('player_count_min', 2)
-        player_count_max = data.get('player_count_max', 4)
+        data = request.get_json()
+        app.logger.info(f"Received data: {data}")
+        
+        # Get selected themes from the form (both random and user-selected)
+        selected_themes = data.get('themes')
+        # Handle mechanism selection, allow up to 3 mechanisms
+        selected_mechanisms = data.get('mechanisms')
+
+        # Handle "Random" option by selecting random themes from the list
+        with open('theme_list.txt', 'r') as file:
+            all_themes = [line.strip() for line in file.readlines()]
+
+        themes = []
+        for theme in selected_themes:
+            if theme == 'random':
+                random_theme = random.choice(all_themes)
+                themes.append(random_theme)
+            else:
+                themes.append(theme)
+
+        # Load mechanism list from file
+        with open('mechanism_list.txt', 'r') as file:
+            all_mechanisms = [line.strip() for line in file.readlines()]
+
+        mechanisms = []
+        for mechanism in selected_mechanisms:
+            if mechanism == 'random':
+                random_mechanism = random.choice(all_mechanisms)
+                mechanisms.append(random_mechanism)
+            else:
+                mechanisms.append(mechanism)
+
+        if themes is None or mechanisms is None:
+            app.logger.error("Themes or mechanisms not received properly!")
+            return jsonify({"error": "Themes or mechanisms not received properly"}), 400
+
+
+        # Retrieve theme_num and mechanism_num from the form        
+        player_count_min = int(data.get('player_count_min', 2))
+        player_count_max = int(data.get('player_count_max', 4))
         game_length = data.get('game_length', '1 hour')
         game_type = data.get('game_type', 'competitive')
-        theme_num = data.get('theme_num', 2)
-        mechanism_num = data.get('mechanism_num', 2)
+        theme_num = int(data.get('theme_num', 2))
+        mechanism_num = int(data.get('mechanism_num', 2))
 
-        # Create the prompt
-        prompt = create_prompt(themes, mechanisms, player_count_min=player_count_min, player_count_max=player_count_max, game_length=game_length, game_type=game_type, theme_num=theme_num, mechanism_num=mechanism_num)
+        # Create prompt with the additional theme_num and mechanism_num
+        prompt = create_prompt(themes, mechanisms, player_count_min=player_count_min, player_count_max=player_count_max,\
+                                game_length=game_length, game_type=game_type,theme_num=theme_num, mechanism_num=mechanism_num)
+        
+        game_idea = generate_idea_with_cache(prompt)
 
-        # Generate the board game idea
-        # game_idea = prompt_to_response(prompt)
-        # game_idea = generate_idea_with_cache(prompt)
-        try:
-            game_idea = generate_idea_with_cache(prompt)
-        except openai.error.OpenAIError as e:
-            return jsonify({'error': 'Failed to generate idea from OpenAI: ' + str(e)}), 200
-        logging.info(f"Generated idea: {game_idea}")
-        # Return the generated idea in JSON format
         return jsonify({'board_game_idea': game_idea}), 200
 
     except Exception as e:
-        # Return an error response in case of an exception
-        logging.error(f"Error occurred: {str(e)}")
-        return jsonify({'error': str(e)}), 200
+        return jsonify({'error': str(e)}), 500
+
 
 
 
@@ -99,7 +135,7 @@ def create_prompt(themes, mechanisms, player_count_min=2, player_count_max=4, ga
         with open('mechanism_list.txt','r') as f:
             mechanism_list= f.readlines()        
         num_to_select= mechanism_num-len(mechanisms)
-        mechanisms_in_in = mechanisms + random.sample(mechanism_list, num_to_select)
+        mechanisms_in = mechanisms + random.sample(mechanism_list, num_to_select)
     else:
         mechanisms_in=mechanisms
 

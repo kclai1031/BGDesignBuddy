@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Board Game Idea Generator</title>
+    <script>
+        let allThemes = {{ themes | safe }};  // From Flask, an array of available themes
+        let allMechanisms = {{ mechanisms | safe }};  // From Flask, an array of available mechanisms
+
+        function proceedToSelection() {
+            // Get the selected number of themes/mechanisms
+            let themeCount = parseInt(document.getElementById('theme_count').value) || 1;
+            let mechanismCount = parseInt(document.getElementById('mechanism_count').value) || 1;
+
+            // Get the number of random themes/mechanisms requested
+            const randomThemeCount = parseInt(document.getElementById('random_theme_count').value) || 0;
+            const randomMechanismCount = parseInt(document.getElementById('random_mechanism_count').value) || 0;
+
+            // Adjust themeCount and mechanismCount for random picks
+            themeCount = Math.max(themeCount, randomThemeCount);
+            mechanismCount = Math.max(mechanismCount, randomMechanismCount);
+
+            // Update hidden inputs
+            document.getElementById('theme_num_input').value = themeCount;
+            document.getElementById('mechanism_num_input').value = mechanismCount;
+
+            const themeContainer = document.getElementById('theme_container');
+            const mechanismContainer = document.getElementById('mechanism_container');
+
+            // Clear previous selections
+            themeContainer.innerHTML = '';
+            mechanismContainer.innerHTML = '';
+
+            // Show chosen number of themes and random selections if any
+            themeContainer.appendChild(createHeading(`Proceeding with ${themeCount} themes:`));
+            mechanismContainer.appendChild(createHeading(`Proceeding with ${mechanismCount} mechanisms:`));
+
+             // Select random themes and mechanisms without duplicates
+            const chosenThemes = selectRandom(allThemes, randomThemeCount);
+            const chosenMechanisms = selectRandom(allMechanisms, randomMechanismCount);
+
+            themeContainer.appendChild(createList("themes", "Randomly selected themes", chosenThemes));
+            mechanismContainer.appendChild(createList("mechanisms", "Randomly selected mechanisms", chosenMechanisms));
+
+            // Remove chosen themes and mechanisms from options
+            const remainingThemes = allThemes.filter(theme => !chosenThemes.includes(theme));
+            const remainingMechanisms = allMechanisms.filter(mechanism => !chosenMechanisms.includes(mechanism));
+
+            // Sort the remaining options alphabetically
+            remainingThemes.sort();
+            remainingMechanisms.sort();
+
+            // Create dropdowns for remaining themes
+            const remainingThemeDropdowns = themeCount - randomThemeCount;
+            for (let i = 0; i < remainingThemeDropdowns; i++) {
+                themeContainer.appendChild(createDropdown("themes", remainingThemes));
+                themeContainer.appendChild(document.createElement('br'));
+            }
+
+            // Create dropdowns for remaining mechanisms
+            const remainingMechanismDropdowns = mechanismCount - randomMechanismCount;
+            for (let i = 0; i < remainingMechanismDropdowns; i++) {
+                mechanismContainer.appendChild(createDropdown("mechanisms", remainingMechanisms));
+                mechanismContainer.appendChild(document.createElement('br'));
+            }
+
+            document.getElementById('proceed_again_btn').style.display = 'block';
+        }
+
+        function createDropdown(name, optionsArray) {
+            const select = document.createElement('select');
+            select.name = name + '[]';  // Add [] to allow multiple values
+
+            optionsArray.forEach(option => {
+                const opt = document.createElement('option');
+                opt.value = option;
+                opt.textContent = option;
+                select.appendChild(opt);
+            });
+
+            return select;
+        }
+
+        function createList(name, title, items) {
+            const container = document.createElement('div');
+
+            const listTitle = document.createElement('h3');
+            listTitle.textContent = title;
+            container.appendChild(listTitle);
+
+            const list = document.createElement('ul');
+            container.appendChild(list);
+
+            items.forEach(item => {
+                // Display the item
+                const listItem = document.createElement('li');
+                listItem.textContent = item;
+                list.appendChild(listItem);
+
+                // Create a hidden input for the item
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = name + '[]';  // 'themes[]' or 'mechanisms[]'
+                hiddenInput.value = item;
+                container.appendChild(hiddenInput);
+            });
+
+            return container;
+        }
+
+        function selectRandom(array, count) {
+            // Create a copy of the array to avoid modifying the original
+            const arrayCopy = [...array];
+            const selected = [];
+
+            for (let i = 0; i < count && arrayCopy.length > 0; i++) {
+                const randomIndex = Math.floor(Math.random() * arrayCopy.length);
+                selected.push(arrayCopy.splice(randomIndex, 1)[0]);
+            }
+
+            return selected;
+        }
+
+        function createHeading(text) {
+            const heading = document.createElement('h3');
+            heading.textContent = text;
+            return heading;
+        }
+        
+        // Function to handle form submission via AJAX
+        function submitForm(event) {
+            event.preventDefault(); // Prevent the form from submitting normally
+
+            const form = document.getElementById('gameForm');
+            const formData = new FormData(form);
+
+            // Collect all selected themes and mechanisms
+            const selectedThemes = formData.getAll('themes[]');
+            const selectedMechanisms = formData.getAll('mechanisms[]');
+
+            // Build the form object
+            const formObj = {
+                theme_num: parseInt(formData.get('theme_num'), 10) || 0,
+                mechanism_num: parseInt(formData.get('mechanism_num'), 10) || 0,
+                player_count_min: formData.get('player_count_min'),
+                player_count_max: formData.get('player_count_max'),
+                game_length: formData.get('game_length'),
+                game_type: formData.get('game_type'),
+                themes: selectedThemes,
+                mechanisms: selectedMechanisms
+            };
+                
+            // Send the form data to the server using fetch
+            fetch('/generate_idea', {
+                method: 'POST',
+                body: JSON.stringify(formObj), // Send as JSON
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json(); // Parse the response as JSON
+            })
+            .then(data => {
+                if (data.board_game_idea) {
+                    // Display the response at the bottom of the page
+                    document.getElementById('response_container').innerHTML = `
+                        <h2>Generated Board Game Idea</h2>
+                        <pre>${data.board_game_idea}</pre>
+                    `;
+                } else {
+                    document.getElementById('response_container').innerHTML = `
+                        <p style="color:red;">Error: Board game idea not found in the response.</p>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('response_container').innerHTML = `
+                    <p style="color:red;">An error occurred while generating the idea. Please try again.</p>
+                `;
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>Board Game Idea Generator</h1>
+    
+    <!-- Stage 1: Select number of themes and mechanisms -->
+    <div>
+        <h2>Step 1: Select Number of Themes and Mechanisms</h2>
+        
+        <label for="theme_count">How many themes? (1-3 or Random):</label>
+        <input type="number" id="theme_count" name="theme_count" value="1" min="1" max="3">
+        <label for="random_theme_count">How many random themes?</label>
+        <input type="number" id="random_theme_count" name="random_theme_count" value="0" min="0" max="3">
+        <br><br>
+
+        <label for="mechanism_count">How many mechanisms? (1-3 or Random):</label>
+        <input type="number" id="mechanism_count" name="mechanism_count" value="1" min="1" max="3">
+        <label for="random_mechanism_count">How many random mechanisms?</label>
+        <input type="number" id="random_mechanism_count" name="random_mechanism_count" value="0" min="0" max="3">
+        <br><br>
+
+        <button type="button" onclick="proceedToSelection()">Proceed</button>
+    </div>
+
+    <!-- Stage 2: Display and select remaining themes and mechanisms -->
+    <div id="stage_2">
+        <h2>Step 2: Select or Review Themes and Mechanisms</h2>
+        
+        <!-- Other inputs (as in your previous design) -->
+        <form id="gameForm" onsubmit="submitForm(event)">
+            <div id="theme_container">
+                <!-- Dynamically generated content for themes will appear here -->
+            </div>
+
+            <div id="mechanism_container">
+                <!-- Dynamically generated content for mechanisms will appear here -->
+            </div>
+
+            <br><br>
+            <button type="button" id="proceed_again_btn" style="display:none;" onclick="proceedToSelection()">Redo Random Selections</button>
+
+            <label for="player_count_min">Min Players:</label>
+            <input type="number" id="player_count_min" name="player_count_min" value="2"><br><br>
+            
+            <label for="player_count_max">Max Players:</label>
+            <input type="number" id="player_count_max" name="player_count_max" value="4"><br><br>
+            
+            <label for="game_length">Game Length:</label>
+            <input type="text" id="game_length" name="game_length" value="1 hour"><br><br>
+            
+            <label for="game_type">Game Type:</label>
+            <select id="game_type" name="game_type">
+                <option value="competitive">Competitive</option>
+                <option value="cooperative">Cooperative</option>
+                <option value="team">Team</option>
+            </select>
+            <br><br>
+            
+            <input type="hidden" id="theme_num_input" name="theme_num" value="2">
+            <input type="hidden" id="mechanism_num_input" name="mechanism_num" value="2">
+
+            <button type="submit">Generate Idea</button>
+        </form>
+    </div>
+
+    <!-- This div will display the response -->
+    <div id="response_container" style="margin-top: 20px;">
+        <!-- The board game idea will be shown here after form submission -->
+    </div>
+</body>
+</html>
