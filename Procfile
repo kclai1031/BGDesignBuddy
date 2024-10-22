@@ -1,1 +1,1 @@
-web: gunicorn BGDesignBuddy_Flask:app
+web: gunicorn app:app
