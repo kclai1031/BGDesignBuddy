@@ -110,8 +110,8 @@ def generate_idea():
         game_idea, ecode = generate_idea_with_cache(prompt)
         if ecode==200:
             return jsonify({'board_game_idea': game_idea}), 200
-        elif ecode==429:
-            return jsonify({'error': game_idea}), 429
+        else:
+            return jsonify({'error': game_idea}), ecode
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -131,6 +131,7 @@ def prompt_to_response(prompt, deployment_name="gpt-4"):
     # Reject request if token limit exceeded
     if tokens_used_today >= DAILY_TOKEN_LIMIT:
         return 'Daily token limit exceeded. Try again tomorrow.', 429
+    # return 'dummy', 200
     response = client.chat.completions.create(model=deployment_name,  # Use the specified OpenAI model (you can use pre-trained models)
     messages=[{"role": "system", "content": "You are a board game designer generating ideas of board game."},
               {"role": "user", "content": prompt}],
