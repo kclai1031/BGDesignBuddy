@@ -134,6 +134,36 @@
     <h1>Board Game Idea Generator</h1>
 
     <form id="gameForm" onsubmit="submitForm(event)">
+        <!-- Other inputs for player count, game length, etc. -->
+        <div class="row_box">
+            <label>Game Type</label>
+            <div class="input_options_box">
+                <select id="game_type" name="game_type">
+                    <option value="competitive">Competitive</option>
+                    <option value="cooperative">Cooperative</option>
+                    <option value="team">Team</option>
+                </select>
+            </div>
+        </div>
+        <div class="row_box">
+            <label>Min Players</label>
+            <div class="input_options_box">
+                <input type="number" id="player_count_min" name="player_count_min" value="2">
+            </div>
+        </div>
+        <div class="row_box">
+            <label>Max Players</label>
+            <div class="input_options_box">
+                <input type="number" id="player_count_max" name="player_count_max" value="4">
+            </div>
+        </div>
+        <div class="row_box">
+            <label>Game Length</label>
+            <div class="input_options_box">
+                <input type="text" id="game_length" name="game_length" value="1 hour">
+            </div>
+        </div>
+
         <!-- Mechanism 1 (dummpy toggle)-->
         <div class="row_box">
             <label for="mechanism_toggle_1">Mechanism 1 </label>
@@ -248,37 +278,7 @@
                 </div>
             </div>
         </div>
-        
-
-        <!-- Other inputs for player count, game length, etc. -->
-        <div class="row_box">
-            <label>Min Players</label>
-            <div class="input_options_box">
-                <input type="number" id="player_count_min" name="player_count_min" value="2">
-            </div>
-        </div>
-        <div class="row_box">
-            <label>Max Players</label>
-            <div class="input_options_box">
-                <input type="number" id="player_count_max" name="player_count_max" value="4">
-            </div>
-        </div>
-        <div class="row_box">
-            <label>Game Length</label>
-            <div class="input_options_box">
-                <input type="text" id="game_length" name="game_length" value="1 hour">
-            </div>
-        </div>
-        <div class="row_box">
-            <label>Game Type</label>
-            <div class="input_options_box">
-                <select id="game_type" name="game_type">
-                    <option value="competitive">Competitive</option>
-                    <option value="cooperative">Cooperative</option>
-                    <option value="team">Team</option>
-                </select>
-            </div>
-        </div>
+                
         <input type="hidden" id="theme_num_input" name="theme_num" value="1">
         <input type="hidden" id="mechanism_num_input" name="mechanism_num" value="1">
         <div class="row_box2">

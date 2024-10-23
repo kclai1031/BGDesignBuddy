@@ -4,7 +4,25 @@ import logging
 import hashlib
 import os
 import random
+import datetime
 
+
+def reset_tokens_if_new_day():
+    global tokens_used_today, last_reset
+    today = datetime.date.today()
+    if today != last_reset:
+        tokens_used_today = 0  # Reset token count
+        last_reset = today
+    return None
+
+def count_tokens_used(response):
+    """
+    Extracts token usage from the response and updates the token counter.
+    """
+    global tokens_used_today
+    tokens_used = response['usage']['total_tokens']
+    tokens_used_today += tokens_used
+    return tokens_used
 
 # Configure logging
 logging.basicConfig(filename='app.log', level=logging.INFO)
@@ -15,6 +33,13 @@ api_key=os.getenv("AZURE_OPENAI_API_KEY"))
 
 app = Flask(__name__)
 
+# Global variables to track token usage
+tokens_used_today = 0
+last_reset = datetime.date.today()
+
+# Define your daily token limit
+DAILY_TOKEN_LIMIT = 100000  # Set a limit (example: 100,000 tokens)
+# DAILY_TOKEN_LIMIT = 550  # Set a limit (example: 100,000 tokens)
 
 @app.route('/')
 def index():
@@ -83,7 +108,7 @@ def generate_idea():
                                 game_length=game_length, game_type=game_type,theme_num=theme_num, mechanism_num=mechanism_num)
         
         game_idea = generate_idea_with_cache(prompt)
-
+        global tokens_used_today
         return jsonify({'board_game_idea': game_idea}), 200
 
     except Exception as e:
@@ -99,6 +124,11 @@ def prompt_to_response(prompt, deployment_name="gpt-4"):
     :param deployment_name: The name of the deployment in Azure OpenAI
     :return: The generated board game idea
     """
+    global tokens_used_today
+    reset_tokens_if_new_day()
+    # Reject request if token limit exceeded
+    if tokens_used_today >= DAILY_TOKEN_LIMIT:
+        return jsonify({'error': 'Daily token limit exceeded. Try again tomorrow.'}), 429
     response = client.chat.completions.create(model=deployment_name,  # Use the specified OpenAI model (you can use pre-trained models)
     messages=[{"role": "system", "content": "You are a board game designer generating ideas of board game."},
               {"role": "user", "content": prompt}],
@@ -107,6 +137,9 @@ def prompt_to_response(prompt, deployment_name="gpt-4"):
     top_p=0.9,  # Controls diversity via nucleus sampling
     frequency_penalty=0.5,  # Discourages repetition
     presence_penalty=0.0)
+
+    # Update token usage
+    # count_tokens_used(response)
     return response.choices[0].message.content.strip()
 
 

@@ -48,20 +48,18 @@ label {
     display: flex-row;
     font-weight: bold;
     margin-left: 20%;
-    margin: 20px auto;
     
 }
 
 input[type="number"], input[type="text"], select {
     width: 100%;
-    padding: 10px;
-    margin: 8px 0;
+    padding: 6px;
+    margin: 0px auto;
     box-sizing: border-box;
     border: 1px solid #ccc;
     border-radius: 4px;
     font-size: 1rem;
     display: block;
-    margin: 0 auto;
 }
 
 
@@ -69,14 +67,14 @@ button {
     max-width: 100px;
     background-color: #4CAF50;
     color: white;
-    padding: 10px 20px;
-    margin-top: 20px;
+    padding: 6px;
+    margin: 0 auto;
     border: none;
     border-radius: 5px;
     cursor: pointer;
     font-size: 1rem;
-    display: block;
-    margin: 0 auto;
+    padding-left: 3%;
+    padding-right: 3%;
 }
 
 button[type="submit"] {
@@ -88,6 +86,7 @@ button[type="submit"] {
     cursor: pointer;
     font-size: 1rem;
     margin: 0 auto;
+    padding: 8px;
 }
 
 button:hover{
@@ -120,7 +119,8 @@ button:hover{
     max-width: 375px;
     display: flex;
     justify-content: flex-end; /* Ensure input field aligns to the right */
-    width: 100%
+    width: 100%;
+    align-items: center;
 }
 
 /* Toggle input section */
@@ -128,7 +128,8 @@ button:hover{
     max-width: 375px;
     display: flex;
     justify-content: flex-end; /* Ensure input field aligns to the right */
-    width: 100%
+    width: 100%;
+    align-items: center;
 }
 
 #response_container {
