@@ -61,34 +61,14 @@ def generate_idea():
         data = request.get_json()
         app.logger.info(f"Received data: {data}")
         
-        # Get selected themes from the form (both random and user-selected)
+        # Get selected themes from the form
         selected_themes = data.get('themes')
-        # Handle mechanism selection, allow up to 3 mechanisms
+        # Get selected mechanisms from the form
         selected_mechanisms = data.get('mechanisms')
 
-        # Handle "Random" option by selecting random themes from the list
-        with open('theme_list.txt', 'r') as file:
-            all_themes = [line.strip() for line in file.readlines()]
-
-        themes = []
-        for theme in selected_themes:
-            if theme == 'random':
-                random_theme = random.choice(all_themes)
-                themes.append(random_theme)
-            else:
-                themes.append(theme)
-
-        # Load mechanism list from file
-        with open('mechanism_list.txt', 'r') as file:
-            all_mechanisms = [line.strip() for line in file.readlines()]
-
-        mechanisms = []
-        for mechanism in selected_mechanisms:
-            if mechanism == 'random':
-                random_mechanism = random.choice(all_mechanisms)
-                mechanisms.append(random_mechanism)
-            else:
-                mechanisms.append(mechanism)
+        # Remove Duplicates 
+        themes = list(set(selected_themes))
+        mechanisms = list(set(selected_mechanisms))
 
         if themes is None or mechanisms is None:
             app.logger.error("Themes or mechanisms not received properly!")

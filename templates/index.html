@@ -35,6 +35,7 @@
             
             if (toggle) {
                 container.style.display = 'flex';  // Show the dropdown
+                randomizeSelection(type, number)
             } else {
                 container.style.display = 'none';  // Hide the dropdown
                 document.getElementById(type + '_dropdown_' + number).value = '';  // Clear the selection
@@ -63,7 +64,20 @@
             if (document.getElementById('theme_toggle_3').checked) themeCount++;
             document.getElementById('theme_num_input').value = themeCount;
         }
-
+        function enforceReload() {
+            randomizeSelection('mechanism', 1)
+            randomizeSelection('theme', 1)
+            enforceClick('mechanism', 2)
+            enforceClick('theme', 2)
+            enforceClick('mechanism', 3)
+            enforceClick('theme', 3)
+        }
+        function enforceClick(type, number){
+            document.getElementById(type + '_toggle_' + number).click();
+            if (document.getElementById(type + '_toggle_' + number).checked){
+                document.getElementById(type + '_toggle_' + number).click();
+            }
+        }
         function submitForm(event) {
             event.preventDefault();
 
@@ -75,13 +89,21 @@
 
             // Add the selected themes if their toggle is on
             selectedThemes.push(formData.get('themes[0]'));
-            if (document.getElementById('theme_toggle_2').checked) selectedThemes.push(formData.get('themes[1]'));
-            if (document.getElementById('theme_toggle_3').checked) selectedThemes.push(formData.get('themes[2]'));
+            if ((document.getElementById('theme_toggle_2').checked) && (formData.get('themes[1]')!='')) {
+                selectedThemes.push(formData.get('themes[1]'));
+            }
+            if ((document.getElementById('theme_toggle_3').checked) && (formData.get('themes[2]')!='')){
+                selectedThemes.push(formData.get('themes[2]'));
+            }
 
             // Add the selected mechanisms if their toggle is on
             selectedMechanisms.push(formData.get('mechanisms[0]'));
-            if (document.getElementById('mechanism_toggle_2').checked) selectedMechanisms.push(formData.get('mechanisms[1]'));
-            if (document.getElementById('mechanism_toggle_3').checked) selectedMechanisms.push(formData.get('mechanisms[2]'));
+            if ((document.getElementById('mechanism_toggle_2').checked) && (formData.get('mechanisms[1]')!='')){
+                selectedMechanisms.push(formData.get('mechanisms[1]'));
+            }
+            if ((document.getElementById('mechanism_toggle_3').checked) && (formData.get('mechanisms[1]')!='')){
+                selectedMechanisms.push(formData.get('mechanisms[2]'));
+            }
 
             
             const formObj = {
@@ -128,7 +150,7 @@
         }
     </script>
 </head>
-<body>
+<body onload="enforceReload()">
 
 <div class="container">
     <h1>Board Game Idea Generator</h1>
@@ -197,7 +219,7 @@
                 <span class="slider round"></span>
             </label>
             <div class="input_options_box">
-                <div id="mechanism_container_2" style="display:none;" class="input_options_toggle">
+                <div id="mechanism_container_2" class="input_options_toggle">
                     <select id="mechanism_dropdown_2" name="mechanisms[1]">
                         {% for mechanism in mechanisms %}
                         <option value="{{ mechanism }}">{{ mechanism }}</option>
@@ -217,7 +239,7 @@
                 <span class="slider round"></span>
             </label>
             <div class="input_options_box">
-                <div id="mechanism_container_3" style="display:none;" class="input_options_toggle">
+                <div id="mechanism_container_3" class="input_options_toggle">
                     <select id="mechanism_dropdown_3" name="mechanisms[2]">
                         {% for mechanism in mechanisms %}
                         <option value="{{ mechanism }}">{{ mechanism }}</option>
@@ -255,7 +277,7 @@
                 <span class="slider round"></span>
             </label>
             <div class="input_options_box">
-                <div id="theme_container_2" style="display:none;" class="input_options_toggle">
+                <div id="theme_container_2" class="input_options_toggle">
                     <select id="theme_dropdown_2" name="themes[1]">
                         {% for theme in themes %}
                         <option value="{{ theme }}">{{ theme }}</option>
@@ -275,7 +297,7 @@
                 <span class="slider round"></span>
             </label>
             <div class="input_options_box">
-                <div id="theme_container_3" style="display:none;" class="input_options_toggle">
+                <div id="theme_container_3" class="input_options_toggle">
                     <select id="theme_dropdown_3" name="themes[2]">
                         {% for theme in themes %}
                         <option value="{{ theme }}">{{ theme }}</option>
