@@ -64,6 +64,19 @@
             if (document.getElementById('theme_toggle_3').checked) themeCount++;
             document.getElementById('theme_num_input').value = themeCount;
         }
+
+        function checkMaxPlayer(){
+            if (document.getElementById('player_count_max').value < document.getElementById('player_count_min').value ){
+                document.getElementById('player_count_max').value = document.getElementById('player_count_min').value
+            }
+        }
+
+        function checkMinPlayer(){
+            if (document.getElementById('player_count_max').value < document.getElementById('player_count_min').value ){
+                document.getElementById('player_count_min').value = document.getElementById('player_count_max').value
+            }
+        }
+
         function enforceReload() {
             randomizeSelection('mechanism', 1)
             randomizeSelection('theme', 1)
@@ -170,13 +183,13 @@
         <div class="row_box">
             <label>Min Players</label>
             <div class="input_options_box">
-                <input type="number" id="player_count_min" name="player_count_min" min="1" max="10" value="2">
+                <input type="number" id="player_count_min" name="player_count_min" min="1" max="10" value="2" onchange="checkMaxPlayer()">
             </div>
         </div>
         <div class="row_box">
             <label>Max Players</label>
             <div class="input_options_box">
-                <input type="number" id="player_count_max" name="player_count_max" min="1" max="10" value="4">
+                <input type="number" id="player_count_max" name="player_count_max" min="1" max="10" value="4" onchange="checkMinPlayer()">
             </div>
         </div>
         <div class="row_box">
