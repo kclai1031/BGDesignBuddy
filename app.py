@@ -20,10 +20,10 @@ app = Flask(__name__)
 def index():
     # Load theme and mechanism lists from the files
     with open('theme_list.txt', 'r') as file:
-        themes = [line.strip() for line in file.readlines()]
+        themes = sorted([line.strip() for line in file.readlines()])
     
     with open('mechanism_list.txt', 'r') as file:
-        mechanisms = [line.strip() for line in file.readlines()]
+        mechanisms = sorted([line.strip() for line in file.readlines()])
 
     # Render the index.html template and pass the theme and mechanism lists to it
     return render_template('index.html', themes=themes, mechanisms=mechanisms)

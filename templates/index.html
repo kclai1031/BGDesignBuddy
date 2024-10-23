@@ -3,146 +3,87 @@
 <head>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
-
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Board Game Idea Generator</title>
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        label, select, input, button {
+            display: block;
+            margin: 10px 0;
+        }
+        .flex-row {
+            display: flex;
+            align-items: center;
+        }
+        .random-button {
+            margin-left: 10px;
+        }
+    </style>
     <script>
         let allThemes = {{ themes | safe }};  // From Flask, an array of available themes
         let allMechanisms = {{ mechanisms | safe }};  // From Flask, an array of available mechanisms
-
-        function proceedToSelection() {
-            // Get the selected number of themes/mechanisms
-            let themeCount = parseInt(document.getElementById('theme_count').value) || 1;
-            let mechanismCount = parseInt(document.getElementById('mechanism_count').value) || 1;
-
-            // Get the number of random themes/mechanisms requested
-            const randomThemeCount = parseInt(document.getElementById('random_theme_count').value) || 0;
-            const randomMechanismCount = parseInt(document.getElementById('random_mechanism_count').value) || 0;
-
-            // Adjust themeCount and mechanismCount for random picks
-            themeCount = Math.max(themeCount, randomThemeCount);
-            mechanismCount = Math.max(mechanismCount, randomMechanismCount);
-
-            // Update hidden inputs
-            document.getElementById('theme_num_input').value = themeCount;
-            document.getElementById('mechanism_num_input').value = mechanismCount;
-
-            const themeContainer = document.getElementById('theme_container');
-            const mechanismContainer = document.getElementById('mechanism_container');
-
-            // Clear previous selections
-            themeContainer.innerHTML = '';
-            mechanismContainer.innerHTML = '';
-
-            // Show chosen number of themes and random selections if any
-            themeContainer.appendChild(createHeading(`Proceeding with ${themeCount} themes:`));
-            mechanismContainer.appendChild(createHeading(`Proceeding with ${mechanismCount} mechanisms:`));
-
-             // Select random themes and mechanisms without duplicates
-            const chosenThemes = selectRandom(allThemes, randomThemeCount);
-            const chosenMechanisms = selectRandom(allMechanisms, randomMechanismCount);
-
-            themeContainer.appendChild(createList("themes", "Randomly selected themes", chosenThemes));
-            mechanismContainer.appendChild(createList("mechanisms", "Randomly selected mechanisms", chosenMechanisms));
-
-            // Remove chosen themes and mechanisms from options
-            const remainingThemes = allThemes.filter(theme => !chosenThemes.includes(theme));
-            const remainingMechanisms = allMechanisms.filter(mechanism => !chosenMechanisms.includes(mechanism));
-
-            // Sort the remaining options alphabetically
-            remainingThemes.sort();
-            remainingMechanisms.sort();
-
-            // Create dropdowns for remaining themes
-            const remainingThemeDropdowns = themeCount - randomThemeCount;
-            for (let i = 0; i < remainingThemeDropdowns; i++) {
-                themeContainer.appendChild(createDropdown("themes", remainingThemes));
-                themeContainer.appendChild(document.createElement('br'));
-            }
-
-            // Create dropdowns for remaining mechanisms
-            const remainingMechanismDropdowns = mechanismCount - randomMechanismCount;
-            for (let i = 0; i < remainingMechanismDropdowns; i++) {
-                mechanismContainer.appendChild(createDropdown("mechanisms", remainingMechanisms));
-                mechanismContainer.appendChild(document.createElement('br'));
-            }
-
-            document.getElementById('proceed_again_btn').style.display = 'block';
-        }
-
-        function createDropdown(name, optionsArray) {
-            const select = document.createElement('select');
-            select.name = name + '[]';  // Add [] to allow multiple values
-
-            optionsArray.forEach(option => {
-                const opt = document.createElement('option');
-                opt.value = option;
-                opt.textContent = option;
-                select.appendChild(opt);
-            });
-
-            return select;
-        }
-
-        function createList(name, title, items) {
-            const container = document.createElement('div');
-
-            const listTitle = document.createElement('h3');
-            listTitle.textContent = title;
-            container.appendChild(listTitle);
-
-            const list = document.createElement('ul');
-            container.appendChild(list);
-
-            items.forEach(item => {
-                // Display the item
-                const listItem = document.createElement('li');
-                listItem.textContent = item;
-                list.appendChild(listItem);
-
-                // Create a hidden input for the item
-                const hiddenInput = document.createElement('input');
-                hiddenInput.type = 'hidden';
-                hiddenInput.name = name + '[]';  // 'themes[]' or 'mechanisms[]'
-                hiddenInput.value = item;
-                container.appendChild(hiddenInput);
-            });
-
-            return container;
-        }
-
-        function selectRandom(array, count) {
-            // Create a copy of the array to avoid modifying the original
-            const arrayCopy = [...array];
-            const selected = [];
-
-            for (let i = 0; i < count && arrayCopy.length > 0; i++) {
-                const randomIndex = Math.floor(Math.random() * arrayCopy.length);
-                selected.push(arrayCopy.splice(randomIndex, 1)[0]);
-            }
-
-            return selected;
-        }
-
-        function createHeading(text) {
-            const heading = document.createElement('h3');
-            heading.textContent = text;
-            return heading;
-        }
         
-        // Function to handle form submission via AJAX
+
+        function toggleSelection(type, number) {
+            const container = document.getElementById(type + '_container_' + number);
+            const toggle = document.getElementById(type + '_toggle_' + number).checked;
+            
+            if (toggle) {
+                container.style.display = 'flex';  // Show the dropdown
+            } else {
+                container.style.display = 'none';  // Hide the dropdown
+                document.getElementById(type + '_dropdown_' + number).value = '';  // Clear the selection
+            }
+            updateMechanismCount();
+            updateThemeCount();
+        }
+
+        function randomizeSelection(type, number) {
+            const select = document.getElementById(type + '_dropdown_' + number);
+            const options = type === 'theme' ? allThemes : allMechanisms;
+            const randomOption = options[Math.floor(Math.random() * options.length)];
+            select.value = randomOption;
+        }
+
+        function updateMechanismCount() {
+            let mechanismCount = 1;  // Mechanism 1 is always selected
+            if (document.getElementById('mechanism_toggle_2').checked) mechanismCount++;
+            if (document.getElementById('mechanism_toggle_3').checked) mechanismCount++;
+            document.getElementById('mechanism_num_input').value = mechanismCount;
+        }
+
+        function updateThemeCount() {
+            let themeCount = 1;  // Theme 1 is always selected
+            if (document.getElementById('theme_toggle_2').checked) themeCount++;
+            if (document.getElementById('theme_toggle_3').checked) themeCount++;
+            document.getElementById('theme_num_input').value = themeCount;
+        }
+
         function submitForm(event) {
-            event.preventDefault(); // Prevent the form from submitting normally
+            event.preventDefault();
 
-            const form = document.getElementById('gameForm');
-            const formData = new FormData(form);
+            const formData = new FormData(document.getElementById('gameForm'));
 
-            // Collect all selected themes and mechanisms
-            const selectedThemes = formData.getAll('themes[]');
-            const selectedMechanisms = formData.getAll('mechanisms[]');
+            // Only include selected themes and mechanisms based on toggles
+            const selectedThemes = [];
+            const selectedMechanisms = [];
 
-            // Build the form object
+            // Add the selected themes if their toggle is on
+            selectedThemes.push(formData.get('themes[0]'));
+            if (document.getElementById('theme_toggle_2').checked) selectedThemes.push(formData.get('themes[1]'));
+            if (document.getElementById('theme_toggle_3').checked) selectedThemes.push(formData.get('themes[2]'));
+
+            // Add the selected mechanisms if their toggle is on
+            selectedMechanisms.push(formData.get('mechanisms[0]'));
+            if (document.getElementById('mechanism_toggle_2').checked) selectedMechanisms.push(formData.get('mechanisms[1]'));
+            if (document.getElementById('mechanism_toggle_3').checked) selectedMechanisms.push(formData.get('mechanisms[2]'));
+
+            
             const formObj = {
                 theme_num: parseInt(formData.get('theme_num'), 10) || 0,
                 mechanism_num: parseInt(formData.get('mechanism_num'), 10) || 0,
@@ -153,7 +94,7 @@
                 themes: selectedThemes,
                 mechanisms: selectedMechanisms
             };
-                
+
             // Send the form data to the server using fetch
             fetch('/generate_idea', {
                 method: 'POST',
@@ -184,84 +125,171 @@
                     `;
                 }
             })
-            .catch(error => {
-                console.error('Error:', error);
-                document.getElementById('response_container').innerHTML = `
-                    <p style="color:red;">An error occurred while generating the idea. Please try again.</p>
-                `;
-            });
         }
     </script>
 </head>
 <body>
+
+<div class="container">
     <h1>Board Game Idea Generator</h1>
-    
-    <br><br>
-    <!-- Stage 1: Select number of themes and mechanisms -->
-    <div>
-        <h2>Step 1: Select Number of Themes and Mechanisms</h2>
-        
-        <label for="theme_count">How many themes? (1-3 or Random):</label>
-        <input type="number" id="theme_count" name="theme_count" value="1" min="1" max="3">
-        <label for="random_theme_count">How many random themes?</label>
-        <input type="number" id="random_theme_count" name="random_theme_count" value="0" min="0" max="3">
-        <br><br>
 
-        <label for="mechanism_count">How many mechanisms? (1-3 or Random):</label>
-        <input type="number" id="mechanism_count" name="mechanism_count" value="1" min="1" max="3">
-        <label for="random_mechanism_count">How many random mechanisms?</label>
-        <input type="number" id="random_mechanism_count" name="random_mechanism_count" value="0" min="0" max="3">
-        <br><br>
-
-        <button type="button" onclick="proceedToSelection()">Proceed</button>
-    </div>
-    <br><br>
-
-    <!-- Stage 2: Display and select remaining themes and mechanisms -->
-    <div id="stage_2">
-        <h2>Step 2: Select or Review Themes and Mechanisms</h2>
-        
-        <!-- Other inputs (as in your previous design) -->
-        <form id="gameForm" onsubmit="submitForm(event)">
-            <div id="theme_container">
-                <!-- Dynamically generated content for themes will appear here -->
+    <form id="gameForm" onsubmit="submitForm(event)">
+        <!-- Mechanism 1 (dummpy toggle)-->
+        <div class="row_box">
+            <label for="mechanism_toggle_1">Mechanism 1 </label>
+            <label class="switch">
+                <input type="checkbox" id="mechanism_toggle_1" name="mechanism_toggle_1" onclick="return false" checked>
+                <span class="slider round"></span>
+            </label>
+            <div id="mechanism_container_1" class="input_options_toggle">
+                <select id="mechanism_dropdown_1" name="mechanisms[0]">
+                    {% for mechanism in mechanisms %}
+                    <option value="{{ mechanism }}">{{ mechanism }}</option>
+                    {% endfor %}
+                </select>
+                <button type="button" class="random-button" onclick="randomizeSelection('mechanism', 1)">Random</button>
             </div>
+        </div>
+        
 
-            <div id="mechanism_container">
-                <!-- Dynamically generated content for mechanisms will appear here -->
+        <!-- Mechanism 2 (toggle) -->
+        <div class="row_box">
+            <label for="mechanism_toggle_2">Mechanism 2 </label>
+            <label class="switch">
+                <input type="checkbox" id="mechanism_toggle_2" name="mechanism_toggle_2" onchange="toggleSelection('mechanism', 2)">
+                <span class="slider round"></span>
+            </label>
+            <div class="input_options_box">
+                <div id="mechanism_container_2" style="display:none;" class="input_options_toggle">
+                    <select id="mechanism_dropdown_2" name="mechanisms[1]">
+                        {% for mechanism in mechanisms %}
+                        <option value="{{ mechanism }}">{{ mechanism }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="button" class="random-button" onclick="randomizeSelection('mechanism', 2)">Random</button>
+                </div>
             </div>
+        </div>
+        
 
-            <br><br>
-            <button type="button" id="proceed_again_btn" style="display:none;" onclick="proceedToSelection()">Redo Random Selections</button>
+        <!-- Mechanism 3 (toggle) -->
+        <div class="row_box">
+            <label for="mechanism_toggle_3">Mechanism 3 </label>
+            <label class="switch">
+                <input type="checkbox" id="mechanism_toggle_3" name="mechanism_toggle_3" onchange="toggleSelection('mechanism', 3)">
+                <span class="slider round"></span>
+            </label>
+            <div class="input_options_box">
+                <div id="mechanism_container_3" style="display:none;" class="input_options_toggle">
+                    <select id="mechanism_dropdown_3" name="mechanisms[2]">
+                        {% for mechanism in mechanisms %}
+                        <option value="{{ mechanism }}">{{ mechanism }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="button" class="random-button" onclick="randomizeSelection('mechanism', 3)">Random</button>
+                </div>
+            </div>
+        </div>
+        
 
-            <label for="player_count_min">Min Players:</label>
-            <input type="number" id="player_count_min" name="player_count_min" value="2"><br><br>
-            
-            <label for="player_count_max">Max Players:</label>
-            <input type="number" id="player_count_max" name="player_count_max" value="4"><br><br>
-            
-            <label for="game_length">Game Length:</label>
-            <input type="text" id="game_length" name="game_length" value="1 hour"><br><br>
-            
-            <label for="game_type">Game Type:</label>
-            <select id="game_type" name="game_type">
-                <option value="competitive">Competitive</option>
-                <option value="cooperative">Cooperative</option>
-                <option value="team">Team</option>
-            </select>
-            <br><br>
-            
-            <input type="hidden" id="theme_num_input" name="theme_num" value="2">
-            <input type="hidden" id="mechanism_num_input" name="mechanism_num" value="2">
+        <!-- Theme 1 (dummpy toggle) -->
+        <div class="row_box">
+            <label for="mechanism_toggle_1">Theme 1 </label>
+            <label class="switch">
+                <input type="checkbox" id="theme_toggle_1" name="theme_toggle_1" onclick="return false" checked>
+                <span class="slider round"></span>
+            </label>
+            <div id="theme_container_1" class="input_options_toggle">
+                <select id="theme_dropdown_1" name="themes[0]">
+                    {% for theme in themes %}
+                    <option value="{{ theme }}">{{ theme }}</option>
+                    {% endfor %}
+                </select>
+                <button type="button" class="random-button" onclick="randomizeSelection('theme', 1)">Random</button>
+            </div>
+        </div>
+        
 
+        <!-- Theme 2 (toggle) -->
+        <div class="row_box">
+            <label for="theme_toggle_2">Theme 2 </label>
+            <label class="switch">
+                <input type="checkbox" id="theme_toggle_2" name="theme_toggle_2" onchange="toggleSelection('theme', 2)">
+                <span class="slider round"></span>
+            </label>
+            <div class="input_options_box">
+                <div id="theme_container_2" style="display:none;" class="input_options_toggle">
+                    <select id="theme_dropdown_2" name="themes[1]">
+                        {% for theme in themes %}
+                        <option value="{{ theme }}">{{ theme }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="button" class="random-button" onclick="randomizeSelection('theme', 2)">Random</button>
+                </div>
+            </div>
+        </div>
+        
+
+        <!-- Theme 3 (toggle) -->
+        <div class="row_box">
+            <label for="theme_toggle_3">Theme 3 </label>
+            <label class="switch">
+                <input type="checkbox" id="theme_toggle_3" name="theme_toggle_3" onchange="toggleSelection('theme', 3)">
+                <span class="slider round"></span>
+            </label>
+            <div class="input_options_box">
+                <div id="theme_container_3" style="display:none;" class="input_options_toggle">
+                    <select id="theme_dropdown_3" name="themes[2]">
+                        {% for theme in themes %}
+                        <option value="{{ theme }}">{{ theme }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="button" class="random-button" onclick="randomizeSelection('theme', 3)">Random</button>
+                </div>
+            </div>
+        </div>
+        
+
+        <!-- Other inputs for player count, game length, etc. -->
+        <div class="row_box">
+            <label>Min Players</label>
+            <div class="input_options_box">
+                <input type="number" id="player_count_min" name="player_count_min" value="2">
+            </div>
+        </div>
+        <div class="row_box">
+            <label>Max Players</label>
+            <div class="input_options_box">
+                <input type="number" id="player_count_max" name="player_count_max" value="4">
+            </div>
+        </div>
+        <div class="row_box">
+            <label>Game Length</label>
+            <div class="input_options_box">
+                <input type="text" id="game_length" name="game_length" value="1 hour">
+            </div>
+        </div>
+        <div class="row_box">
+            <label>Game Type</label>
+            <div class="input_options_box">
+                <select id="game_type" name="game_type">
+                    <option value="competitive">Competitive</option>
+                    <option value="cooperative">Cooperative</option>
+                    <option value="team">Team</option>
+                </select>
+            </div>
+        </div>
+        <input type="hidden" id="theme_num_input" name="theme_num" value="1">
+        <input type="hidden" id="mechanism_num_input" name="mechanism_num" value="1">
+        <div class="row_box2">
             <button type="submit">Generate Idea</button>
-        </form>
-    </div>
+        </div>
+    </form>
 
-    <br><br>
-    <!-- This div will display the response -->
     <div id="response_container" style="margin-top: 20px;">
-        <!-- The board game idea will be shown here after form submission -->
+        <!-- Display the generated board game idea here -->
     </div>
+</div>
+
 </body>
 </html>
