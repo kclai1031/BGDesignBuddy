@@ -20,7 +20,8 @@ def count_tokens_used(response):
     Extracts token usage from the response and updates the token counter.
     """
     global tokens_used_today
-    tokens_used = response['usage']['total_tokens']
+    # tokens_used = response['usage']['total_tokens']
+    tokens_used = 500
     tokens_used_today += tokens_used
     return tokens_used
 
@@ -38,8 +39,7 @@ tokens_used_today = 0
 last_reset = datetime.date.today()
 
 # Define your daily token limit
-DAILY_TOKEN_LIMIT = 100000  # Set a limit (example: 100,000 tokens)
-# DAILY_TOKEN_LIMIT = 550  # Set a limit (example: 100,000 tokens)
+DAILY_TOKEN_LIMIT = (500*3)*20  # Set a limit
 
 @app.route('/')
 def index():
@@ -107,9 +107,11 @@ def generate_idea():
         prompt = create_prompt(themes, mechanisms, player_count_min=player_count_min, player_count_max=player_count_max,\
                                 game_length=game_length, game_type=game_type,theme_num=theme_num, mechanism_num=mechanism_num)
         
-        game_idea = generate_idea_with_cache(prompt)
-        global tokens_used_today
-        return jsonify({'board_game_idea': game_idea}), 200
+        game_idea, ecode = generate_idea_with_cache(prompt)
+        if ecode==200:
+            return jsonify({'board_game_idea': game_idea}), 200
+        elif ecode==429:
+            return jsonify({'error': game_idea}), 429
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -128,7 +130,7 @@ def prompt_to_response(prompt, deployment_name="gpt-4"):
     reset_tokens_if_new_day()
     # Reject request if token limit exceeded
     if tokens_used_today >= DAILY_TOKEN_LIMIT:
-        return jsonify({'error': 'Daily token limit exceeded. Try again tomorrow.'}), 429
+        return 'Daily token limit exceeded. Try again tomorrow.', 429
     response = client.chat.completions.create(model=deployment_name,  # Use the specified OpenAI model (you can use pre-trained models)
     messages=[{"role": "system", "content": "You are a board game designer generating ideas of board game."},
               {"role": "user", "content": prompt}],
@@ -139,8 +141,8 @@ def prompt_to_response(prompt, deployment_name="gpt-4"):
     presence_penalty=0.0)
 
     # Update token usage
-    # count_tokens_used(response)
-    return response.choices[0].message.content.strip()
+    count_tokens_used(response)
+    return response.choices[0].message.content.strip(), 200
 
 
 def create_prompt(themes, mechanisms, player_count_min=2, player_count_max=4, game_length='1 hour', game_type='competitive', theme_num=2, mechanism_num=2):

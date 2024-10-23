@@ -45,7 +45,6 @@ h3 {
 label {
     width: 25%;
     max-width: 150px;
-    display: flex-row;
     font-weight: bold;
     margin-left: 20%;
     
