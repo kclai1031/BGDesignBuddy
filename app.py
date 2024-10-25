@@ -30,6 +30,7 @@ def count_tokens_used(response):
 # Configure logging
 logging.basicConfig(filename='app.log', level=logging.INFO)
 
+# Initialize OpenAI with Azure credentials
 client = AzureOpenAI(azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
 api_version="2023-05-15",
 api_key=os.getenv("AZURE_OPENAI_API_KEY"))
@@ -47,7 +48,7 @@ tokens_lock = threading.Lock()
 last_reset = datetime.date.today()
 
 # Define your daily token limit
-DAILY_TOKEN_LIMIT = (500*3)*20  # Set a limit
+DAILY_TOKEN_LIMIT = (500*2)*20  # Set a limit
 
 @app.route('/')
 def index():
@@ -62,7 +63,6 @@ def index():
     return render_template('index.html', themes=themes, mechanisms=mechanisms)
 
 
-# Initialize OpenAI with Azure credentials
 @app.route('/generate_idea', methods=['POST'])
 def generate_idea():    
     try:

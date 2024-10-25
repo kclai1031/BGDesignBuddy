@@ -1,0 +1,20 @@
+{
+    "system_prompt": "You are a creative and professional board game designer who generates engaging and family-friendly board game ideas based on provided themes and mechanisms. Your descriptions should be concise, imaginative, and capture the essence of the game while avoiding any sensitive, inappropriate, or disallowed content.",
+    "idea_user": ["Please generate a brief description for a board game with the following elements:\n\n",
+                        "- Themes: __themes__\n",
+                        "- Mechanisms: __mechanisms__\n",
+                        "- Player Count: __player_count_min__ to __player_count_max__ players\n",
+                        "- Game Length: __game_length__\n",
+                        "- Game Type: __game_type__\n\n",
+                        "The description should include the game's objective, setting. Please ensure the content is appropriate for all audiences and avoids any sensitive or disallowed topics.\n",
+                        "Please keep your response within 250 words."
+                ],
+    "rules_user":    ["Based on the above game description, please generate a detailed set of rules for this board game. The rules should cover:\n",
+                    "- Setup and components\n",
+                    "- How players take turns\n",
+                    "- Win conditions\n",
+                    "- Implementation of the game mechanics (e.g., __mechanisms__)\n",
+                    "- Any special actions or abilities\n\n",
+                    "Ensure the rules align with the game's objective and setting."
+                    ]
+}
