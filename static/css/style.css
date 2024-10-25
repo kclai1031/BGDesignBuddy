@@ -1,12 +1,37 @@
 body {
     font-family: Arial, sans-serif;
     background-color: #f5f5f5;
-    margin: 0;
+    margin:0;
+    margin-top: 10px;
     padding: 0;
     display: flex;
     flex-direction: column;
     justify-content: center;
     color: #333;
+}
+.intro {
+    text-align: center;
+    max-width: 600px;
+    margin: 5px auto;
+    padding: 10px 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.intro p {
+    font-size: 1.1rem;
+    line-height: 1.2;
+    margin: 10px 0;
+}
+
+.intro a {
+    color: #0077b5;
+    text-decoration: none;
+}
+
+.intro a:hover {
+    text-decoration: underline;
 }
 
 .container {
@@ -19,6 +44,7 @@ body {
     border-radius: 8px;
     
 }
+p { margin:2px }
 
 h1, h2, h3 {
     color: #333;
@@ -29,17 +55,17 @@ h1, h2, h3 {
 
 h1 {
     font-size: 2.5rem;
-    margin-bottom: 20px;
+    margin-bottom: 5px;
 }
 
 h2  {
     font-size: 1.5rem;
-    margin-top: 30px;
+    margin-top: 10px;
 }
 
 h3 {
     font-size: 1rem;
-    margin-top: 30px;
+    margin-top: 10px;
 }
 
 label {
@@ -244,3 +270,41 @@ button:hover{
     white-space: pre-wrap; /* Ensures long text breaks */
 }
 
+footer {
+    background-color: #f5f5f5;
+    width: 100%;
+    margin-top:10px;
+    display: block;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 5px;
+}
+
+/* Style for the social links container */
+.social-links {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Style for the anchor tags */
+.social-links a {
+    margin: 0 10px;
+    text-decoration: none;
+}
+
+/* Style for the SVG icons */
+.social-links svg {
+    fill: #495057; /* Default icon color */
+    transition: fill 0.3s;
+}
+
+/* Hover effects */
+.social-links a:hover svg {
+    fill: #0a66c2; /* Change to desired hover color */
+}
+
+/* Specific hover color for GitHub icon */
+.social-links a[aria-label="GitHub"]:hover svg {
+    fill: #171515; /* GitHub black */
+}

@@ -6,7 +6,7 @@
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Board Game Idea Generator</title>
+    <title>Board Game Design Buddy</title>
     <style>
         .container {
             max-width: 800px;
@@ -47,7 +47,25 @@
         function randomizeSelection(type, number) {
             const select = document.getElementById(type + '_dropdown_' + number);
             const options = type === 'theme' ? allThemes : allMechanisms;
-            const randomOption = options[Math.floor(Math.random() * options.length)];
+
+            // Collect all selected options to avoid duplicates
+            const selectedOptions = [];
+            [1, 2, 3].forEach(i => {
+                if (i !== number) {
+                    const otherSelect = document.getElementById(`${type}_dropdown_${i}`);
+                    if (otherSelect && otherSelect.value) {
+                        selectedOptions.push(otherSelect.value);
+                    }
+                }
+            });
+
+            // Filter out selected options
+            const availableOptions = options.filter(option => !selectedOptions.includes(option));
+
+            // If no options are available, do nothing
+            if (availableOptions.length === 0) return;
+
+            const randomOption = availableOptions[Math.floor(Math.random() * availableOptions.length)];
             select.value = randomOption;
         }
 
@@ -78,12 +96,17 @@
         }
 
         function enforceReload() {
+            document.getElementById('response_container_idea').style.display = 'none';
+            document.getElementById('response_container_rules').style.display = 'none';
+            document.getElementById('gameFormRules').style.display = 'none';
             randomizeSelection('mechanism', 1)
             randomizeSelection('theme', 1)
             enforceClick('mechanism', 2)
             enforceClick('theme', 2)
             enforceClick('mechanism', 3)
             enforceClick('theme', 3)
+            updateMechanismCount();
+            updateThemeCount();
         }
         function enforceClick(type, number){
             document.getElementById(type + '_toggle_' + number).click();
@@ -91,35 +114,62 @@
                 document.getElementById(type + '_toggle_' + number).click();
             }
         }
-        function submitForm(event) {
-            event.preventDefault();
 
-            const formData = new FormData(document.getElementById('gameForm'));
+        let userSettings = {
+                theme_num: 1,
+                mechanism_num: 1,
+                player_count_min: 2,
+                player_count_max: 4,
+                game_length: '1 hour',
+                game_type: 'Competitive',
+                themes: [],
+                mechanisms: [],
+                response_idea: '',
+                response_rules: ''
+            };
+
+        function submitFormIdea(event) {
+            event.preventDefault();
+            
+            const ideaButton = document.getElementById('idea_button');
+    
+            // Disable the button and change the text to "Processing..."
+            ideaButton.disabled = true;
+            ideaButton.textContent = "Processing...";
+
+            const rulesButton = document.getElementById('rules_button');
+    
+            // Disable the button and change the text to "Processing..."
+            rulesButton.disabled = true;
+            rulesButton.textContent = "Processing...";
+
+            const formData = new FormData(document.getElementById('gameFormIdea'));
 
             // Only include selected themes and mechanisms based on toggles
-            const selectedThemes = [];
-            const selectedMechanisms = [];
+            let selectedThemes = [];
+            let selectedMechanisms = [];
 
             // Add the selected themes if their toggle is on
             selectedThemes.push(formData.get('themes[0]'));
-            if ((document.getElementById('theme_toggle_2').checked) && (formData.get('themes[1]')!='')) {
+            if ((document.getElementById('theme_toggle_2').checked) && (formData.get('themes[1]')!='')){
                 selectedThemes.push(formData.get('themes[1]'));
             }
             if ((document.getElementById('theme_toggle_3').checked) && (formData.get('themes[2]')!='')){
                 selectedThemes.push(formData.get('themes[2]'));
             }
+            
 
             // Add the selected mechanisms if their toggle is on
             selectedMechanisms.push(formData.get('mechanisms[0]'));
             if ((document.getElementById('mechanism_toggle_2').checked) && (formData.get('mechanisms[1]')!='')){
                 selectedMechanisms.push(formData.get('mechanisms[1]'));
             }
-            if ((document.getElementById('mechanism_toggle_3').checked) && (formData.get('mechanisms[1]')!='')){
+            if ((document.getElementById('mechanism_toggle_3').checked) && (formData.get('mechanisms[2]')!='')){
                 selectedMechanisms.push(formData.get('mechanisms[2]'));
             }
 
             
-            const formObj = {
+            userSettings = {
                 theme_num: parseInt(formData.get('theme_num'), 10) || 0,
                 mechanism_num: parseInt(formData.get('mechanism_num'), 10) || 0,
                 player_count_min: formData.get('player_count_min'),
@@ -127,56 +177,147 @@
                 game_length: formData.get('game_length'),
                 game_type: formData.get('game_type'),
                 themes: selectedThemes,
-                mechanisms: selectedMechanisms
+                mechanisms: selectedMechanisms,
+                response_idea: '',
+                response_rules: ''
             };
-
+            
+            document.getElementById('response_container_idea').style.display = 'none';
+            document.getElementById('response_container_rules').style.display = 'none';
+            document.getElementById('gameFormRules').style.display = 'none';
+            
             // Send the form data to the server using fetch
             fetch('/generate_idea', {
                 method: 'POST',
-                body: JSON.stringify(formObj), // Send as JSON
+                body: JSON.stringify(userSettings),
                 headers: {
                     'Content-Type': 'application/json'
                 }
             })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json(); // Parse the response as JSON
-            })
-            .then(data => {
-                if (data.board_game_idea) {
-                    // Convert the board game idea Markdown to HTML
-                    const formattedIdea = marked.parse(data.board_game_idea);
-
-                    // Display the formatted HTML in the response container
-                    document.getElementById('response_container').innerHTML = `
-                        <h2>Generated Board Game Idea</h2>
-                        <div class="idea-box">${formattedIdea}</div>
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.board_game_idea) {
+                        const formattedIdea = marked.parse(data.board_game_idea);
+                        userSettings['response_idea']= data.board_game_idea
+                        document.getElementById('response_container_idea').style.display = 'block';
+                        document.getElementById('gameFormRules').style.display = 'block';
+                        document.getElementById('response_container_idea').innerHTML = `
+                            <h2>Generated Board Game Idea</h2>
+                            <div class="idea-box">${formattedIdea}</div>
+                        `;
+                        document.getElementById('response_container_idea').scrollIntoView({ behavior: "smooth", block: "start" });
+                    } else {
+                        document.getElementById('response_container_idea').style.display = 'block';
+                        document.getElementById('response_container_idea').innerHTML = `
+                            <p style="color:red;">Error: Board game idea not found in the response.</p>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);                    
+                    document.getElementById('response_container_idea').style.display = 'block';
+                    document.getElementById('response_container_idea').innerHTML = `
+                        <p style="color:red;">An error occurred: ${error.message}</p>
                     `;
-                } else {
-                    document.getElementById('response_container').innerHTML = `
-                        <p style="color:red;">Error: Board game idea not found in the response.</p>
-                    `;
-                }
-            })
+                })
+                .finally(() => {
+                    // Re-enable the button and revert its text after the response is received
+                    ideaButton.disabled = false;
+                    ideaButton.textContent = "Generate Idea";
+                    rulesButton.disabled = false;
+                    rulesButton.textContent = "Generate Rules";
+                });
         }
+        
+        function submitFormRules(event) {
+            event.preventDefault();
+
+            const ideaButton = document.getElementById('idea_button');
+    
+            // Disable the button and change the text to "Processing..."
+            ideaButton.disabled = true;
+            ideaButton.textContent = "Processing...";
+
+            const rulesButton = document.getElementById('rules_button');
+    
+            // Disable the button and change the text to "Processing..."
+            rulesButton.disabled = true;
+            rulesButton.textContent = "Processing...";
+
+            // Send the form data to the server using fetch
+            fetch('/generate_rules', {
+                method: 'POST',
+                body: JSON.stringify(userSettings),
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.board_game_rules) {
+                        const formattedRules = marked.parse(data.board_game_rules);
+                        userSettings['response_rules']= data.board_game_rules
+                        document.getElementById('response_container_rules').style.display = 'block';
+                        document.getElementById('response_container_rules').innerHTML = `
+                            <h2>Generated Board Game Rules</h2>
+                            <div class="idea-box">${formattedRules}</div>
+                        `;
+                        document.getElementById('response_container_rules').scrollIntoView({ behavior: "smooth", block: "start" });
+                    } else {
+                        document.getElementById('response_container_rules').style.display = 'block';
+                        document.getElementById('response_container_rules').innerHTML = `
+                            <p style="color:red;">Error: Board game rules not found in the response.</p>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById('response_container_rules').style.display = 'block';
+                    document.getElementById('response_container_rules').innerHTML = `
+                        <p style="color:red;">An error occurred: ${error.message}</p>
+                    `;
+                })
+                .finally(() => {
+                    // Re-enable the button and revert its text after the response is received
+                    ideaButton.disabled = false;
+                    ideaButton.textContent = "Generate Idea";
+                    rulesButton.disabled = false;
+                    rulesButton.textContent = "Generate Rules";
+                });
+            
+        }
+
+        
     </script>
 </head>
 <body onload="enforceReload()">
 
 <div class="container">
-    <h1>Board Game Idea Generator</h1>
-
-    <form id="gameForm" onsubmit="submitForm(event)">
+    <h1>Board Game Design Buddy</h1>
+    <div class="intro">
+        <p>Welcome to the Board Game Design Buddy! This AL-assisted tool helps you brain storm board game ideas by selecting different themes and mechanics. Simply adjust your preferences and see explore the possibility.</p>        
+        <p>For more information or to contribute to this project, visit this <a href="https://github.com/kclai1031/BGDesignBuddy" target="_blank">GitHub repository</a>.</p>
+    </div>
+    
+    <form id="gameFormIdea" onsubmit="submitFormIdea(event)">
         <!-- Other inputs for player count, game length, etc. -->
         <div class="row_box">
             <label>Game Type</label>
             <div class="input_options_box">
                 <select id="game_type" name="game_type">
-                    <option value="competitive" selected="selected">Competitive</option>
-                    <option value="cooperative">Cooperative</option>
-                    <option value="team">Team</option>
+                    <option value="Competitive" selected="selected">Competitive</option>
+                    <option value="Cooperative">Cooperative</option>
+                    <option value="Team">Team</option>
                 </select>
             </div>
         </div>
@@ -266,7 +407,7 @@
 
         <!-- Theme 1 (dummpy toggle) -->
         <div class="row_box">
-            <label for="mechanism_toggle_1">Theme 1 </label>
+            <label for="theme_toggle_1">Theme 1 </label>
             <label class="switch">
                 <input type="checkbox" id="theme_toggle_1" name="theme_toggle_1" onclick="return false" checked>
                 <span class="slider round"></span>
@@ -324,14 +465,73 @@
         <input type="hidden" id="theme_num_input" name="theme_num" value="1">
         <input type="hidden" id="mechanism_num_input" name="mechanism_num" value="1">
         <div class="row_box2">
-            <button type="submit">Generate Idea</button>
+            <button type="submit" id="idea_button">Generate Idea</button>
         </div>
     </form>
 
-    <div id="response_container" style="margin-top: 20px;">
+    <div id="response_container_idea" style="margin-top: 20px;">
         <!-- Display the generated board game idea here -->
+    </div>
+
+    <form id="gameFormRules" onsubmit="submitFormRules(event)">        
+        <div class="row_box2">
+            <button type="submit" id="rules_button">Generate Rules</button>
+        </div>
+    </form>
+
+    <div id="response_container_rules" style="margin-top: 20px;">
+        <!-- Display the generated board game rules here -->
     </div>
 </div>
 
 </body>
+<footer>
+    
+    <div class="social-links">
+        <p>My LinkedIn: </p>
+        <a
+          href="https://www.linkedin.com/in/kingchunlai/"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="LinkedIn"
+        >
+            <!-- LinkedIn SVG Icon -->
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              role="img"
+              viewBox="0 0 24 24"
+              width="20"
+              height="20"
+            >
+                <title>LinkedIn</title>
+                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+            </svg>
+        </a>
+        <div style='width: 5%'></div>
+        <p>Project GutHub: </p>
+        <a
+          href="https://github.com/kclai1031/BGDesignBuddy"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="GitHub"
+        >
+            <!-- GitHub SVG Icon -->
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              role="img"
+              viewBox="0 0 24 24"
+              width="20"
+              height="20"
+            >
+                <title>GitHub</title>
+                <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+            </svg>
+        </a>
+    </div>
+    <center>
+        <p>This board game idea was generated using the <a href="https://github.com/kclai1031/BGDesignBuddy">Board Game Design Buddy</a>,<br> with assistance from an AI language model provided by Azure OpenAI.
+        </p>
+        <p xmlns:cc="http://creativecommons.org/ns#" xmlns:dct="http://purl.org/dc/terms/"><a property="dct:title" rel="cc:attributionURL" href="https://github.com/kclai1031/BGDesignBuddy">Board Game Design Buddy</a> by <a rel="cc:attributionURL dct:creator" property="cc:attributionName" href="https://www.linkedin.com/in/kingchunlai/">K. C. Lai</a> is licensed under <a href="https://creativecommons.org/licenses/by-nc/4.0/?ref=chooser-v1" target="_blank" rel="license noopener noreferrer" style="display:inline-block;">CC BY-NC 4.0<img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg?ref=chooser-v1" alt=""><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/by.svg?ref=chooser-v1" alt=""><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/nc.svg?ref=chooser-v1" alt=""></a></p> </center>
+</footer>
+
 </html>

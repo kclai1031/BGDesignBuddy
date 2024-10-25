@@ -3,9 +3,10 @@ from flask import Flask, request, jsonify, render_template
 import logging
 import hashlib
 import os
-import random
 import datetime
-
+import json
+import threading
+from flask_caching import Cache
 
 def reset_tokens_if_new_day():
     global tokens_used_today, last_reset
@@ -22,7 +23,8 @@ def count_tokens_used(response):
     global tokens_used_today
     # tokens_used = response['usage']['total_tokens']
     tokens_used = 500
-    tokens_used_today += tokens_used
+    with tokens_lock:
+        tokens_used_today += tokens_used
     return tokens_used
 
 # Configure logging
@@ -33,9 +35,15 @@ api_version="2023-05-15",
 api_key=os.getenv("AZURE_OPENAI_API_KEY"))
 
 app = Flask(__name__)
+app.config.from_mapping({
+    'CACHE_TYPE': 'SimpleCache',
+    'CACHE_DEFAULT_TIMEOUT': 300
+})
+cache = Cache(app)  
 
 # Global variables to track token usage
 tokens_used_today = 0
+tokens_lock = threading.Lock()
 last_reset = datetime.date.today()
 
 # Define your daily token limit
@@ -61,33 +69,41 @@ def generate_idea():
         data = request.get_json()
         app.logger.info(f"Received data: {data}")
         
+
         # Get selected themes from the form
         selected_themes = data.get('themes')
         # Get selected mechanisms from the form
         selected_mechanisms = data.get('mechanisms')
-
         # Remove Duplicates 
-        themes = list(set(selected_themes))
-        mechanisms = list(set(selected_mechanisms))
+        user_settings ={}
+        user_settings["themes"] = list(set(selected_themes))
+        user_settings["mechanisms"] = list(set(selected_mechanisms))
 
-        if themes is None or mechanisms is None:
+        if user_settings["themes"] is None or user_settings["mechanisms"] is None:
             app.logger.error("Themes or mechanisms not received properly!")
             return jsonify({"error": "Themes or mechanisms not received properly"}), 400
 
+        user_settings["themes_text"] = ' and '.join(user_settings["themes"])
+        user_settings["mechanisms_text"] = ' and '.join(user_settings["mechanisms"])
 
         # Retrieve theme_num and mechanism_num from the form        
-        player_count_min = int(data.get('player_count_min', 2))
-        player_count_max = int(data.get('player_count_max', 4))
-        game_length = data.get('game_length', '1 hour')
-        game_type = data.get('game_type', 'competitive')
-        theme_num = int(data.get('theme_num', 2))
-        mechanism_num = int(data.get('mechanism_num', 2))
+        user_settings["player_count_min"] = int(data.get('player_count_min', 2))
+        user_settings["player_count_max"] = int(data.get('player_count_max', 4))
+        user_settings["game_length"] = data.get('game_length', '1 hour')
+        user_settings["game_type"] = data.get('game_type', 'competitive')
+        user_settings["theme_num"] = int(data.get('theme_num', 2))
+        user_settings["mechanism_num"] = int(data.get('mechanism_num', 2))
 
-        # Create prompt with the additional theme_num and mechanism_num
-        prompt = create_prompt(themes, mechanisms, player_count_min=player_count_min, player_count_max=player_count_max,\
-                                game_length=game_length, game_type=game_type,theme_num=theme_num, mechanism_num=mechanism_num)
+        if user_settings["player_count_max"] < user_settings["player_count_min"]:
+            user_settings["player_count_max"] = user_settings["player_count_min"]
         
-        game_idea, ecode = generate_idea_with_cache(prompt)
+        if user_settings["theme_num"] != len(user_settings["themes"]):
+            user_settings["theme_num"] = len(user_settings["themes"])
+        if user_settings["mechanism_num"] != len(user_settings["mechanisms"]):
+            user_settings["mechanism_num"] = len(user_settings["mechanisms"])        
+        # Create prompt with the additional theme_num and mechanism_num
+        prompts = create_prompt_idea(user_settings)
+        game_idea, ecode = cache_response(prompts)
         if ecode==200:
             return jsonify({'board_game_idea': game_idea}), 200
         else:
@@ -95,11 +111,85 @@ def generate_idea():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    
+@app.route('/generate_rules', methods=['POST'])
+def generate_rules():    
+    try:
+        # Create prompt
+        data = request.get_json()
+        user_settings ={}
+        selected_mechanisms = data.get('mechanisms')
+        user_settings["mechanisms"] = list(set(selected_mechanisms))
+        user_settings["mechanisms_text"] = ' and '.join(user_settings["mechanisms"])
 
+        user_settings["response_idea"] = data.get('response_idea')
 
+        prompts = create_prompt_rules(user_settings)
+        game_rules, ecode = cache_response(prompts)
+        if ecode==200:
+            return jsonify({'board_game_rules': game_rules}), 200
+        else:
+            return jsonify({'error': game_rules}), ecode
 
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
-def prompt_to_response(prompt, deployment_name="gpt-4"):
+def create_prompt_idea(user_settings):
+    """
+    This function constructs the prompt for generating board game ideas.
+    """
+    with open('prompt_templates.json', 'r') as f:
+        prompts_template = json.load(f)
+    system_prompt = prompts_template["system_prompt"]
+    user_prompt_list = prompts_template["idea_user"]
+    user_prompt_list[1] = user_prompt_list[1].replace("__themes__", user_settings["themes_text"])
+    user_prompt_list[2] = user_prompt_list[2].replace("__mechanisms__", user_settings["mechanisms_text"])
+    if user_settings["player_count_max"]!=user_settings["player_count_min"]:
+        user_prompt_list[3] = user_prompt_list[3].replace("__player_count_min__", str(user_settings["player_count_min"])).replace("__player_count_max__", str(user_settings["player_count_max"]))
+    else:
+        user_prompt_list[3] = user_prompt_list[3].replace("__player_count_min__ to __player_count_max__ players", f"{user_settings['player_count_min']} player")
+    user_prompt_list[4] = user_prompt_list[4].replace("__game_length__", user_settings["game_length"])
+    user_prompt_list[5] = user_prompt_list[5].replace("__game_type__", user_settings["game_type"])
+    user_prompt = ''.join(user_prompt_list)
+
+    prompts = [{"role": "system", "content": system_prompt}]
+    prompts += [{"role": "user", "content": user_prompt}]
+    return prompts
+
+def create_prompt_rules(user_settings):
+    """
+    This function constructs the prompt for generating board game rules.
+    """
+    with open('prompt_templates.json', 'r') as f:
+        prompts_template = json.load(f)
+    system_prompt = prompts_template["system_prompt"]
+    user_prompt_list = prompts_template["rules_user"]
+    user_prompt_list[3] = user_prompt_list[3].replace("__mechanisms__", user_settings["mechanisms_text"])
+    user_prompt = ''.join(user_prompt_list)
+    assistant_prompt = user_settings["response_idea"]
+    prompts = [{"role": "system", "content": system_prompt}]
+    prompts += [{"role": "assistant", "content": assistant_prompt}]
+    prompts += [{"role": "user", "content": user_prompt}]
+    return prompts
+
+from flask_caching import Cache
+cache = Cache(app, config={'CACHE_TYPE': 'SimpleCache'})
+
+def cache_response(prompts):
+    prompt_combined = ''.join([f"{item['role']}: {item['content']}" for item in prompts])
+    prompt_hash = hashlib.md5(prompt_combined.encode()).hexdigest()
+    # Check if the response is already cached
+    cached_response = cache.get(prompt_hash)
+    if cached_response:
+        return cached_response, 200
+    # If not cached, generate a new idea
+    response_text, ecode = prompt_to_response(prompts)
+    if ecode == 200:
+        cache.set(prompt_hash, response_text)
+    
+    return response_text, ecode
+
+def prompt_to_response(prompts, deployment_name="gpt-4"):
     """
     This function generates a board game idea using the deployed model in Azure OpenAI.
     :param prompt: The input prompt to guide the model
@@ -107,107 +197,23 @@ def prompt_to_response(prompt, deployment_name="gpt-4"):
     :return: The generated board game idea
     """
     global tokens_used_today
+
     reset_tokens_if_new_day()
     # Reject request if token limit exceeded
     if tokens_used_today >= DAILY_TOKEN_LIMIT:
         return 'Daily token limit exceeded. Try again tomorrow.', 429
-    # return 'dummy', 200
+    # return '\n'.join([f"{item['role']}: {item['content']}" for item in prompts]), 200
+
     response = client.chat.completions.create(model=deployment_name,  # Use the specified OpenAI model (you can use pre-trained models)
-    messages=[{"role": "system", "content": "You are a board game designer generating ideas of board game."},
-              {"role": "user", "content": prompt}],
-    max_tokens=500,  # Adjust based on how long you want the completion to be
+    messages=prompts, # Prompts crafted above
+    max_tokens=1000,  # Adjust based on how long you want the completion to be
     temperature=0.7,  # Controls creativity (higher = more creative)
     top_p=0.9,  # Controls diversity via nucleus sampling
     frequency_penalty=0.5,  # Discourages repetition
     presence_penalty=0.0)
-
     # Update token usage
     count_tokens_used(response)
     return response.choices[0].message.content.strip(), 200
-
-
-def create_prompt(themes, mechanisms, player_count_min=2, player_count_max=4, game_length='1 hour', game_type='competitive', theme_num=2, mechanism_num=2):
-    """
-    This function constructs the prompt for generating board game ideas.
-    :param themes: List of themes for the board game
-    :param mechanisms: List of game mechanisms
-    :param player_count_min: Minimum number of players
-    :param player_count_max: Maximum number of players
-    :param game_length: Estimated game length
-    :param game_type: Type of game (competitive, cooperative, team-based)
-    :theme_num: Number of themes
-    :mechanism_num: Number of mechanisms
-    :return: The constructed prompt
-    """
-    if len(themes)<theme_num:
-        with open('theme_list.txt','r') as f:
-            theme_list= f.readlines()
-        num_to_select= theme_num-len(themes)
-        themes_in = themes + random.sample(theme_list, num_to_select)
-    else:
-        themes_in=themes
-
-    if len(mechanisms)<mechanism_num:
-        with open('mechanism_list.txt','r') as f:
-            mechanism_list= f.readlines()        
-        num_to_select= mechanism_num-len(mechanisms)
-        mechanisms_in = mechanisms + random.sample(mechanism_list, num_to_select)
-    else:
-        mechanisms_in=mechanisms
-
-    theme_text = ' and '.join(themes_in)
-    mechanism_text = ' and '.join(mechanisms_in)
-    if player_count_max <= player_count_min:
-        prompt = (f"Generate a {game_type} board game for {player_count_min} players with a {theme_text} theme, "
-              f"using {mechanism_text} mechanisms. The game should last about {game_length}.")
-    else:   
-        prompt = (f"Generate a {game_type} board game for {player_count_min} to {player_count_max} players with a {theme_text} theme, "
-              f"using {mechanism_text} mechanisms. The game should last about {game_length}.")
-    return prompt
-
-cache = {}
-
-def generate_idea_with_cache(prompt):
-    prompt_hash = hashlib.md5(prompt.encode()).hexdigest()
-
-    # Check if the response is already cached
-    if prompt_hash in cache:
-        return cache[prompt_hash]
-    
-    # If not cached, generate a new idea
-    game_idea = prompt_to_response(prompt)
-    
-    # Store the result in cache
-    cache[prompt_hash] = game_idea
-    
-    return game_idea
-
-
-def main():
-    # Example inputs
-    themes = ['Cthulhu Mythos', 'Horror', 'Adventure']  # Example from themes list
-    mechanisms = ['Drafting', 'Hand Management']  # Example from mechanisms list
-    player_count_min = 2  # Number of players
-    player_count_max = 5  # Number of players
-    game_length = '1 hour'  # Game duration
-    game_type = 'copetitive'  # Type of game (competitive, cooperative, or team-based)
-
-    # Create the prompt
-    prompt = create_prompt(themes, mechanisms, player_count_min, player_count_max, game_length, game_type)
-    print("Generated Prompt:", prompt)
-
-    # Generate the board game idea
-    # game_idea = prompt_to_response(prompt)
-    try:
-        game_idea = generate_idea_with_cache(prompt)
-    except openai.error.OpenAIError as e:
-        return jsonify({'error': 'Failed to generate idea from OpenAI: ' + str(e)}), 500
-
-    print("Board Game Idea:", game_idea)
-
-
-# if __name__ == "__main__":
-#     main()
 
 
 if __name__ == '__main__':
