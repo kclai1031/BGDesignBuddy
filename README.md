@@ -15,7 +15,6 @@ You can access the live app hosted on Azure services here:
 The app generates board game ideas based on user-selected mechanisms and themes. It consists of three stages:
 1. Generating a brief description.
 2. Creating detailed rules.
-3. Listing the components.
 
 ### Technology Stack
 - **Backend**: Flask (Python)

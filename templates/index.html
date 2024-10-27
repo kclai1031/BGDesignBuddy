@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- for parsing the reponse -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
-    
+
+    <!-- css -->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Board Game Design Buddy</title>
@@ -11,17 +13,6 @@
         .container {
             max-width: 800px;
             margin: 0 auto;
-        }
-        label, select, input, button {
-            display: block;
-            margin: 10px 0;
-        }
-        .flex-row {
-            display: flex;
-            align-items: center;
-        }
-        .random-button {
-            margin-left: 10px;
         }
     </style>
     <script>
@@ -312,7 +303,9 @@
     <form id="gameFormIdea" onsubmit="submitFormIdea(event)">
         <!-- Other inputs for player count, game length, etc. -->
         <div class="row_box">
-            <label>Game Type</label>
+            <label style="width:50%; margin-bottom: 1px;">Game Type</label>            
+        </div>
+        <div class="row_box">
             <div class="input_options_box">
                 <select id="game_type" name="game_type">
                     <option value="Competitive" selected="selected">Competitive</option>
@@ -321,20 +314,28 @@
                 </select>
             </div>
         </div>
+
         <div class="row_box">
-            <label>Min Players</label>
+            <label style="width:50%; margin-bottom: 1px;">Min Players</label>
+        </div>
+        <div class="row_box">
             <div class="input_options_box">
                 <input type="number" id="player_count_min" name="player_count_min" min="1" max="10" value="2" onchange="checkMaxPlayer()">
             </div>
         </div>
         <div class="row_box">
-            <label>Max Players</label>
+            <label style="width:50%; margin-bottom: 1px;">Max Players</label>
+        </div>
+        <div class="row_box">
             <div class="input_options_box">
                 <input type="number" id="player_count_max" name="player_count_max" min="1" max="10" value="4" onchange="checkMinPlayer()">
             </div>
         </div>
+
         <div class="row_box">
-            <label>Game Length</label>
+            <label style="width:50%; margin-bottom: 1px;">Game Length</label>
+        </div>
+        <div class="row_box">
             <div class="input_options_box">
                 <select id="game_length" name="game_length">
                     <option value="30 mins" selected="selected">30 mins</option>
@@ -349,11 +350,13 @@
 
         <!-- Mechanism 1 (dummpy toggle)-->
         <div class="row_box">
-            <label for="mechanism_toggle_1">Mechanism 1 </label>
+            <label for="mechanism_toggle_1" style="width:50%; margin-bottom: 1px;">Mechanism 1 </label>
             <label class="switch">
                 <input type="checkbox" id="mechanism_toggle_1" name="mechanism_toggle_1" onclick="return false" checked>
                 <span class="slider round"></span>
             </label>
+        </div>
+        <div class="row_box">
             <div id="mechanism_container_1" class="input_options_toggle">
                 <select id="mechanism_dropdown_1" name="mechanisms[0]">
                     {% for mechanism in mechanisms %}
@@ -367,12 +370,13 @@
 
         <!-- Mechanism 2 (toggle) -->
         <div class="row_box">
-            <label for="mechanism_toggle_2">Mechanism 2 </label>
+            <label for="mechanism_toggle_2" style="width:50%; margin-bottom: 1px;">Mechanism 2 </label>
             <label class="switch">
                 <input type="checkbox" id="mechanism_toggle_2" name="mechanism_toggle_2" onchange="toggleSelection('mechanism', 2)">
                 <span class="slider round"></span>
             </label>
-            <div class="input_options_box">
+        </div>
+        <div class="row_box">
                 <div id="mechanism_container_2" class="input_options_toggle">
                     <select id="mechanism_dropdown_2" name="mechanisms[1]">
                         {% for mechanism in mechanisms %}
@@ -381,17 +385,18 @@
                     </select>
                     <button type="button" class="random-button" onclick="randomizeSelection('mechanism', 2)">Random</button>
                 </div>
-            </div>
         </div>
         
 
         <!-- Mechanism 3 (toggle) -->
         <div class="row_box">
-            <label for="mechanism_toggle_3">Mechanism 3 </label>
+            <label for="mechanism_toggle_3" style="width:50%; margin-bottom: 1px;">Mechanism 3 </label>
             <label class="switch">
                 <input type="checkbox" id="mechanism_toggle_3" name="mechanism_toggle_3" onchange="toggleSelection('mechanism', 3)">
                 <span class="slider round"></span>
             </label>
+        </div>
+        <div class="row_box">
             <div class="input_options_box">
                 <div id="mechanism_container_3" class="input_options_toggle">
                     <select id="mechanism_dropdown_3" name="mechanisms[2]">
@@ -407,11 +412,13 @@
 
         <!-- Theme 1 (dummpy toggle) -->
         <div class="row_box">
-            <label for="theme_toggle_1">Theme 1 </label>
+            <label for="theme_toggle_1" style="width:50%; margin-bottom: 1px;">Theme 1 </label>
             <label class="switch">
                 <input type="checkbox" id="theme_toggle_1" name="theme_toggle_1" onclick="return false" checked>
                 <span class="slider round"></span>
             </label>
+        </div>
+        <div class="row_box">
             <div id="theme_container_1" class="input_options_toggle">
                 <select id="theme_dropdown_1" name="themes[0]">
                     {% for theme in themes %}
@@ -421,15 +428,16 @@
                 <button type="button" class="random-button" onclick="randomizeSelection('theme', 1)">Random</button>
             </div>
         </div>
-        
 
         <!-- Theme 2 (toggle) -->
         <div class="row_box">
-            <label for="theme_toggle_2">Theme 2 </label>
+            <label for="theme_toggle_2" style="width:50%; margin-bottom: 1px;">Theme 2 </label>
             <label class="switch">
                 <input type="checkbox" id="theme_toggle_2" name="theme_toggle_2" onchange="toggleSelection('theme', 2)">
                 <span class="slider round"></span>
             </label>
+        </div>
+        <div class="row_box">
             <div class="input_options_box">
                 <div id="theme_container_2" class="input_options_toggle">
                     <select id="theme_dropdown_2" name="themes[1]">
@@ -441,15 +449,16 @@
                 </div>
             </div>
         </div>
-        
 
         <!-- Theme 3 (toggle) -->
         <div class="row_box">
-            <label for="theme_toggle_3">Theme 3 </label>
+            <label for="theme_toggle_3" style="width:50%; margin-bottom: 1px;">Theme 3 </label>
             <label class="switch">
                 <input type="checkbox" id="theme_toggle_3" name="theme_toggle_3" onchange="toggleSelection('theme', 3)">
                 <span class="slider round"></span>
             </label>
+        </div>
+        <div class="row_box">
             <div class="input_options_box">
                 <div id="theme_container_3" class="input_options_toggle">
                     <select id="theme_dropdown_3" name="themes[2]">
@@ -464,18 +473,18 @@
                 
         <input type="hidden" id="theme_num_input" name="theme_num" value="1">
         <input type="hidden" id="mechanism_num_input" name="mechanism_num" value="1">
-        <div class="row_box2">
+        <div class="row_box">
             <button type="submit" id="idea_button">Generate Idea</button>
         </div>
     </form>
 
-    <div id="response_container_idea" style="margin-top: 20px;">
+    <div id="response_container_idea">
         <!-- Display the generated board game idea here -->
     </div>
 
     <form id="gameFormRules" onsubmit="submitFormRules(event)">        
-        <div class="row_box2">
-            <button type="submit" id="rules_button">Generate Rules</button>
+        <div class="row_box">
+            <button type="submit" id="rules_button" style="width:80%">Generate Rules</button>
         </div>
     </form>
 

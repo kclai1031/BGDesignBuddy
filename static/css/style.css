@@ -69,11 +69,9 @@ h3 {
 }
 
 label {
-    width: 25%;
+    margin: 10px 0 auto;
     max-width: 150px;
-    font-weight: bold;
-    margin-left: 20%;
-    
+    font-weight: bold;    
 }
 
 input[type="number"], input[type="text"], select {
@@ -84,34 +82,37 @@ input[type="number"], input[type="text"], select {
     border: 1px solid #ccc;
     border-radius: 4px;
     font-size: 1rem;
-    display: block;
+    display: flex;
 }
 
+select {
+    margin-top: 5px;
+}
 
 button {
     max-width: 100px;
+    width: 80%;
+    padding: 5px;
     background-color: #4CAF50;
     color: white;
-    padding: 6px;
-    margin: 0 auto;
+    margin: 5px auto;
     border: none;
     border-radius: 5px;
     cursor: pointer;
     font-size: 1rem;
-    padding-left: 3%;
-    padding-right: 3%;
 }
 
 button[type="submit"] {
-    max-width: 300px;
+    max-width: 100%;
+    width: 80%;
+    margin-top: 20px;
+    padding: 8px;
     background-color: #4CAF50;
     color: white;
     border: none;
     border-radius: 5px;
     cursor: pointer;
     font-size: 1rem;
-    margin: 0 auto;
-    padding: 8px;
 }
 
 button:hover{
@@ -124,35 +125,43 @@ button:hover{
     }
 
     button {
-        width: 100%;
-        padding: 15px;
+        max-width: 20%;
+        padding: 8px;
     }
+
+    .random-button{
+        font-size: 0.5rem;}
+    
+}
+.random-button {
+    margin-left: 10px;
+}
+.random-button-small {
+    margin-left: 10px;
 }
 
-/* Container for toggle sections */
 .row_box {
     padding-left:10%;
     padding-right:10%;
     max-width: 600px;
     display: flex;
-    justify-content: space-between; /* Ensure space between label and input */
-    align-items: center; /* Align vertically to center */
+    justify-content: space-between; 
+    align-items: center; 
 }
 
-/* Input container for each form row */
 .input_options_box {
-    max-width: 375px;
+    max-width: 600px;
     display: flex;
-    justify-content: flex-end; /* Ensure input field aligns to the right */
+    justify-content: flex-end;
     width: 100%;
     align-items: center;
 }
 
 /* Toggle input section */
 .input_options_toggle {
-    max-width: 375px;
+    max-width: 600px;
     display: flex;
-    justify-content: flex-end; /* Ensure input field aligns to the right */
+    justify-content: flex-end;
     width: 100%;
     align-items: center;
 }
@@ -173,7 +182,6 @@ button:hover{
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* Switch Button */
 .switch {
     position: relative;
     display: inline-block;
@@ -181,7 +189,6 @@ button:hover{
     height: 34px;
   }
   
-  /* Hide default HTML checkbox */
   .switch input {
     opacity: 0;
     width: 0;
@@ -280,31 +287,26 @@ footer {
     padding-bottom: 5px;
 }
 
-/* Style for the social links container */
 .social-links {
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-/* Style for the anchor tags */
 .social-links a {
     margin: 0 10px;
     text-decoration: none;
 }
 
-/* Style for the SVG icons */
 .social-links svg {
-    fill: #495057; /* Default icon color */
+    fill: #495057;
     transition: fill 0.3s;
 }
 
-/* Hover effects */
 .social-links a:hover svg {
-    fill: #0a66c2; /* Change to desired hover color */
+    fill: #0a66c2;
 }
 
-/* Specific hover color for GitHub icon */
 .social-links a[aria-label="GitHub"]:hover svg {
-    fill: #171515; /* GitHub black */
+    fill: #171515;
 }
